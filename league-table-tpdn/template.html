@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>League Table TPDN</title>
+<style>
+:root{--navy:#12263f;--accent:#1f4e79;--bg:#e9ecef;--card:#fff;--line:#dde1e6;--fg:#1d2733;--muted:#67727e;--good:#2e9e5b;--warn:#e0a100;--bad:#d64545}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:13px/1.45 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;min-width:1180px}
+header{background:var(--navy);color:#fff;display:flex;align-items:center;gap:24px;padding:0 20px;height:54px}
+header h1{font-size:17px;font-weight:600;margin:0;white-space:nowrap}
+header .meta{font-size:11.5px;color:#a9b7c6;margin-left:auto;text-align:right;line-height:1.3}
+nav{display:flex;gap:2px;height:100%}
+nav button{background:none;border:0;color:#b9c6d3;font:inherit;font-size:13px;padding:0 16px;cursor:pointer;border-bottom:3px solid transparent}
+nav button:hover{color:#fff}
+nav button.on{color:#fff;border-bottom-color:#f2a900;font-weight:600}
+.slicers{background:#fff;border-bottom:1px solid var(--line);padding:8px 20px;display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.slicers label{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px}
+select{font:inherit;border:1px solid var(--line);border-radius:4px;padding:4px 8px;background:#fff;color:var(--fg)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{background:#e3edf7;color:var(--accent);border-radius:999px;padding:2px 4px 2px 10px;font-size:12px;display:inline-flex;gap:4px;align-items:center}
+.chip button{border:0;background:none;color:inherit;cursor:pointer;font-size:14px;line-height:1;padding:0 4px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:4px;padding:4px 10px;cursor:pointer;font:inherit}
+.btn:hover{background:#f3f5f7}
+main{padding:12px 20px 28px}
+.page{display:none}.page.on{display:block}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px}
+.kpi{background:var(--card);border-radius:6px;padding:10px 14px;box-shadow:0 1px 2px rgba(0,0,0,.08);border-left:4px solid var(--accent)}
+.kpi .k{color:var(--muted);font-size:11.5px}
+.kpi .v{font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+.kpi .s{font-size:11px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;margin-bottom:12px}
+.card{background:var(--card);border-radius:6px;padding:10px 12px 8px;box-shadow:0 1px 2px rgba(0,0,0,.08);min-width:0;display:flex;flex-direction:column}
+.card h3{margin:0 0 6px;font-size:12.5px;font-weight:600;color:var(--fg);display:flex;justify-content:space-between;gap:8px}
+.card h3 small{font-weight:400;color:var(--muted)}
+.cv{position:relative;flex:1;min-height:0}
+.s3{grid-column:span 3}.s4{grid-column:span 4}.s5{grid-column:span 5}.s6{grid-column:span 6}.s7{grid-column:span 7}.s8{grid-column:span 8}.s12{grid-column:span 12}
+.h260{height:260px}.h300{height:300px}.h340{height:340px}.h400{height:400px}.h440{height:440px}
+.tw{overflow:auto;flex:1;min-height:0}
+table{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums}
+th,td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-size:11px;color:var(--muted);font-weight:600;position:sticky;top:0;background:#fff;cursor:default}
+th.sortable{cursor:pointer}
+.n{text-align:right}
+td.rk{font-weight:600;width:36px}
+td.vol{position:relative;min-width:90px}
+td.vol::before{content:"";position:absolute;left:0;top:4px;bottom:4px;width:var(--w,0%);background:#dbe7f3;border-radius:0 3px 3px 0}
+td.vol span{position:relative}
+tr.sel td{background:#fff6d6}
+tbody tr.click{cursor:pointer}
+tbody tr.click:hover td{background:#f3f7fb}
+.empty{padding:30px;text-align:center;color:var(--muted)}
+.note{font-size:11px;color:var(--muted);margin:4px 0 0}
+.heat td{text-align:right;min-width:70px;font-size:12px}
+.heat th.col{cursor:pointer}
+.heat td.rowh{text-align:left;font-weight:600;cursor:pointer;background:#fff}
+.tierbadge{display:inline-block;border-radius:999px;padding:1px 9px;font-size:11px;color:#fff}
+.legend{display:flex;gap:10px;font-size:11px;color:var(--muted);flex-wrap:wrap;margin-top:2px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+@media (max-width:820px){
+body{min-width:0}
+header{flex-wrap:wrap;height:auto;padding:8px 12px;gap:4px 12px}
+header h1{font-size:15px;white-space:normal}
+header .meta{margin-left:auto;font-size:10.5px}
+nav{order:3;width:100%;height:38px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+nav button{white-space:nowrap;padding:0 12px;font-size:12.5px;flex:none}
+.slicers{padding:8px 12px;gap:8px 10px}
+.slicers label{font-size:11.5px}
+.slicers select{max-width:150px}
+main{padding:10px 10px 24px}
+.kpis{grid-template-columns:repeat(2,1fr);gap:8px}
+.kpi .v{font-size:20px}
+.kpi:last-child{grid-column:1/-1}
+.grid{grid-template-columns:1fr;gap:10px}
+.grid>*{grid-column:1/-1}
+.card{height:auto!important}
+.cv{flex:none;height:280px}
+.tw{max-height:440px}
+#p_data .tw{max-height:70vh}
+.card h3{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">League Table TPDN</h1>
+  <nav id="nav"></nav>
+  <div class="meta" id="meta"></div>
+</header>
+<div class="slicers" id="slicers"></div>
+<main>
+  <div class="page" id="p_overview">
+    <div class="kpis" id="kpis"></div>
+    <div class="grid">
+      <div class="card s6 h300"><h3>KLPH và số đợt PH theo tháng <small>tỷ đồng</small></h3><div class="cv"><canvas id="c_month"></canvas></div></div>
+      <div class="card s3 h300"><h3>Thị phần tổ chức tư vấn</h3><div class="cv"><canvas id="c_advshare"></canvas></div></div>
+      <div class="card s3 h300"><h3>KLPH theo nhóm ngành</h3><div class="cv"><canvas id="c_sector"></canvas></div></div>
+    </div>
+    <div class="grid">
+      <div class="card s4 h340"><h3>Top tổ chức tư vấn <small>KLPH, tỷ đồng</small></h3><div class="cv"><canvas id="c_topadv"></canvas></div></div>
+      <div class="card s4 h340"><h3>Top đại diện sở hữu TP <small>KLPH, tỷ đồng · chỉ trái phiếu công chúng</small></h3><div class="cv"><canvas id="c_toptr"></canvas></div></div>
+      <div class="card s4 h340"><h3>KLPH và tỷ lệ phân phối theo kỳ hạn <small>làm tròn năm</small></h3><div class="cv"><canvas id="c_tenor"></canvas></div></div>
+    </div>
+    <div class="grid">
+      <div class="card s4 h300"><h3>KLPH lũy kế <small>tỷ đồng</small></h3><div class="cv"><canvas id="c_cum"></canvas></div></div>
+      <div class="card s3 h300"><h3>KLPH theo hình thức phát hành</h3><div class="cv"><canvas id="c_method"></canvas></div></div>
+      <div class="card s5 h300"><h3>Các đợt phát hành theo thời gian <small>kích thước bong bóng = KLPH</small></h3><div class="cv"><canvas id="c_timeline"></canvas></div><div class="legend" id="lg_timeline"></div></div>
+    </div>
+  </div>
+
+  <div class="page" id="p_adv">
+    <div class="grid">
+      <div class="card s6 h400"><h3>Bảng xếp hạng tổ chức tư vấn <span><select id="advsort"><option value="vol">Xếp theo KLPH</option><option value="dist">Xếp theo TL phân phối</option></select></span></h3><div class="tw" id="t_adv"></div><p class="note" id="n_adv"></p></div>
+      <div class="card s6 h400"><h3>Số đợt PH, tỷ lệ phân phối và KLPH <small>trục X: số đợt PH; trục Y: TL phân phối; kích thước: KLPH</small></h3><div class="cv"><canvas id="c_bubble"></canvas></div></div>
+    </div>
+    <div class="grid">
+      <div class="card s4 h340"><h3>Tỷ lệ phân phối bình quân gia quyền <small>chỉ trái phiếu công chúng</small></h3><div class="cv"><canvas id="c_distadv"></canvas></div></div>
+      <div class="card s8 h340"><h3>KLPH theo tháng và tổ chức tư vấn <small>tỷ đồng</small></h3><div class="cv"><canvas id="c_stack"></canvas></div></div>
+    </div>
+    <div class="grid">
+      <div class="card s12 h340"><h3>Cơ cấu kỳ hạn của từng tổ chức tư vấn <small>KLPH, tỷ đồng</small></h3><div class="cv"><canvas id="c_advtenor"></canvas></div></div>
+    </div>
+  </div>
+
+  <div class="page" id="p_tr">
+    <div class="grid">
+      <div class="card s5 h400"><h3>Bảng xếp hạng đại diện sở hữu trái phiếu</h3><div class="tw" id="t_tr"></div><p class="note" id="n_tr"></p></div>
+      <div class="card s4 h400"><h3>KLPH theo đại diện sở hữu <small>tỷ đồng</small></h3><div class="cv"><canvas id="c_trbar"></canvas></div></div>
+      <div class="card s3 h400"><h3>Thị phần <small>công chúng</small></h3><div class="cv"><canvas id="c_trshare"></canvas></div></div>
+    </div>
+    <div class="grid">
+      <div class="card s7 h340"><h3>Quan hệ tổ chức tư vấn và đại diện sở hữu <small>KLPH, tỷ đồng</small></h3><div class="tw" id="heat"></div></div>
+      <div class="card s5 h340"><h3>Tỷ lệ phân phối theo đại diện sở hữu <small>chỉ trái phiếu công chúng</small></h3><div class="cv"><canvas id="c_trdist"></canvas></div></div>
+    </div>
+  </div>
+
+  <div class="page" id="p_law">
+    <div id="law_data" class="grid">
+      <div class="card s5 h340"><h3>Xếp hạng công ty luật theo dữ liệu</h3><div class="tw" id="t_law"></div></div>
+      <div class="card s7 h340"><h3>KLPH theo công ty luật <small>tỷ đồng</small></h3><div class="cv"><canvas id="c_law"></canvas></div></div>
+    </div>
+    <div id="law_none" class="card" style="margin-bottom:12px"><div class="note" style="font-size:12.5px;line-height:1.6;color:var(--fg)">Thông tư 138/2026/TT-BTC chưa yêu cầu công bố công ty luật tư vấn, nên mục này tạm dùng xếp hạng IFLR1000 làm tham chiếu uy tín. VBMA sẽ cập nhật ở phiên bản tiếp theo khi có dữ liệu riêng cho từng tổ chức phát hành.</div></div>
+    <div class="grid">
+      <div class="card s5 h440"><h3>IFLR1000: số công ty theo nhóm <small>Capital markets: Debt, Việt Nam, ấn bản 2025</small></h3><div class="cv"><canvas id="c_iflr"></canvas></div></div>
+      <div class="card s7 h440"><h3>IFLR1000: danh sách xếp hạng</h3><div class="tw" id="t_iflr"></div><p class="note">Xếp hạng định tính theo nhóm, không phản ánh khối lượng hay số đợt, và bao quát cả phát hành quốc tế. Số liệu tĩnh, không đổi theo file nguồn.</p></div>
+    </div>
+    <div class="card" id="iflr_cred" style="margin-bottom:12px"><h3>Đánh giá độ tin cậy của IFLR1000</h3><ul class="note" style="font-size:12.5px;line-height:1.6;color:var(--fg);margin:0;padding-left:18px"><li><b>Mức độ uy tín:</b> bảng xếp hạng chuyên ngành về luật tài chính và doanh nghiệp, được nhiều hãng luật dùng làm thước đo vị thế; xếp hạng theo từng quốc gia và lĩnh vực hành nghề, chia nhóm (tier). Đánh giá chung: đáng tin cậy làm tham chiếu về danh tiếng và năng lực.</li><li><b>Phương pháp:</b> ba nhánh gồm hồ sơ giao dịch (yếu tố quan trọng nhất), phản hồi của khách hàng (tối đa 15 người giới thiệu mỗi lĩnh vực) và thông tin thị trường qua phỏng vấn, khảo sát.</li><li><b>Hạn chế:</b> dựa chủ yếu trên hồ sơ do các hãng luật tự nộp; ưu tiên giao dịch lớn, phức tạp; không phản ánh số đợt hay khối lượng; các công ty cùng nhóm không phân thứ tự; danh sách trong dashboard là ấn bản 2025, chưa cập nhật ấn bản mới nhất (nội dung trả phí).</li><li><b>Cách dùng:</b> phù hợp làm tham chiếu uy tín, không dùng làm bằng chứng về thị phần tư vấn.</li></ul></div>
+  </div>
+
+  <div class="page" id="p_col">
+    <div id="col_data" class="grid">
+      <div class="card s6 h400"><h3>Xếp hạng tổ chức quản lý TSBĐ</h3><div class="tw" id="t_col"></div></div>
+      <div class="card s6 h400"><h3>KLPH theo tổ chức quản lý TSBĐ <small>tỷ đồng</small></h3><div class="cv"><canvas id="c_col"></canvas></div></div>
+    </div>
+    <div id="col_none" class="card" style="margin-bottom:12px"><div class="note" style="font-size:12.5px;line-height:1.6;color:var(--fg)">Theo Thông tư 138/2026/TT-BTC (hiệu lực từ 01/10/2026), tổ chức quản lý tài sản bảo đảm (TSBĐ) là một trong các tổ chức liên quan phải công bố khi chào bán trái phiếu riêng lẻ. Tuy nhiên, dữ liệu công khai trên Chuyên trang thông tin về trái phiếu doanh nghiệp của HNX hiện chưa có thông tin này nên chưa thể xếp hạng. VBMA sẽ cập nhật ở phiên bản tiếp theo khi có dữ liệu.</div></div>
+  </div>
+
+  <div class="page" id="p_data">
+    <div class="grid"><div class="card s12" style="height:640px"><h3>Chi tiết các đợt phát hành <span><button class="btn" id="exp">Xuất CSV (đã lọc)</button></span></h3><div class="tw" id="t_data"></div></div></div>
+  </div>
+</main>
+__CHARTJS__
+<script>
+const D=__DATA__;
+const META=__META__;
+const IFLR=[["Nhóm 1","A&O Shearman"],["Nhóm 1","VILAF"],["Nhóm 1","YKVN"],["Nhóm 2","Allens"],["Nhóm 2","Baker McKenzie"],["Nhóm 2","Frasers Law Company"],["Nhóm 2","Freshfields"],["Nhóm 3","Russin & Vecchi"],["Nhóm 3","Vision & Associates"],["Đáng chú ý","APFL Partners (a member of LPA Law)"],["Đáng chú ý","Global Vietnam Lawyers"]];
+const TIERC={"Nhóm 1":"#1f4e79","Nhóm 2":"#2f80c0","Nhóm 3":"#7aa7d0","Đáng chú ý":"#9aa7b3"};
+const PAL=["#1f4e79","#2f80c0","#f2a900","#e4572e","#3fa796","#8e6bbf","#7a8b99","#c25b8a","#5c9e31","#b08968"];
+const TGC={"≤ 3 năm":"#3fa796","3 – 7 năm":"#2f80c0","> 7 năm":"#e4572e"};
+const $=id=>document.getElementById(id);
+const NF0=new Intl.NumberFormat("vi-VN",{maximumFractionDigits:0}),NF1=new Intl.NumberFormat("vi-VN",{minimumFractionDigits:1,maximumFractionDigits:1});
+const f0=x=>NF0.format(x),f1=x=>NF1.format(x),p1=x=>NF1.format(x*100)+"%";
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const sum=a=>a.reduce((s,r)=>s+r.vol,0);
+const wdist=a=>{const b=a.filter(r=>r.dist!=null),v=sum(b);return v?b.reduce((s,r)=>s+r.vol*r.dist,0)/v:null;};
+let F={year:"",tg:"",sector:"",method:"",adv:null,tr:null,month:null,law:null};
+let page="overview";
+const HAS_LAW=D.some(r=>r.law.length), METHODS=[...new Set(D.map(r=>r.method).filter(Boolean))];
+
+function rowsFor(ex){
+  return D.filter(r=>(!F.year||String(r.y)===F.year)&&(!F.tg||r.tg===F.tg)&&(ex==="method"||!F.method||r.method===F.method)&&
+    (ex==="sector"||!F.sector||r.sector===F.sector)&&(ex==="adv"||!F.adv||r.advs.includes(F.adv))&&(ex==="tr"||!F.tr||r.tr===F.tr)&&
+    (ex==="month"||!F.month||r.ym===F.month)&&(ex==="law"||!F.law||r.law.includes(F.law)));
+}
+function league(rows,keyFn,sort){
+  const m=new Map(),total=sum(rows);
+  rows.forEach(r=>{(keyFn(r)||[]).forEach(k=>{if(!k)return;let g=m.get(k);if(!g){g={name:k,n:0,vol:0,rs:[]};m.set(k,g);}g.n++;g.vol+=r.vol;g.rs.push(r);});});
+  const out=[...m.values()].map(g=>({name:g.name,n:g.n,vol:g.vol,share:total?g.vol/total:0,dist:wdist(g.rs),rs:g.rs}));
+  const byD=sort==="dist";
+  out.sort((a,b)=>byD?((b.dist==null)-(a.dist==null))||((b.dist||0)-(a.dist||0))||(b.vol-a.vol):(b.vol-a.vol)||a.name.localeCompare(b.name,"vi"));
+  let prev=null,pr=0;out.forEach((g,i)=>{const v=byD?(g.dist==null?-1:Math.round(g.dist*1000)):Math.round(g.vol*10);if(v!==prev){pr=i+1;prev=v;}g.rank=pr;});
+  return out;
+}
+const ADV=r=>r.advs, TR=r=>r.tr?[r.tr]:[], LAW=r=>r.law;
+
+/* ---------- chart plumbing ---------- */
+Chart.defaults.font.family='"Segoe UI",system-ui,Arial,sans-serif';Chart.defaults.font.size=11;Chart.defaults.color="#4a5561";
+Chart.defaults.animation=false;Chart.defaults.maintainAspectRatio=false;Chart.defaults.plugins.legend.display=false;
+Chart.defaults.plugins.legend.labels.boxWidth=10;Chart.defaults.plugins.legend.labels.boxHeight=10;
+const CH={};
+const VL={id:"vl",afterDatasetsDraw(ch,_a,o){
+  if(!o||!o.on)return;const ctx=ch.ctx,ds=o.ds||0,meta=ch.getDatasetMeta(ds);ctx.save();ctx.fillStyle="#333";ctx.font="11px "+Chart.defaults.font.family;
+  meta.data.forEach((el,i)=>{const v=ch.data.datasets[ds].data[i];if(v==null)return;const t=o.fmt(v);
+    if(o.horizontal){ctx.textAlign="left";ctx.textBaseline="middle";ctx.fillText(t,el.x+4,el.y);}else{ctx.textAlign="center";ctx.textBaseline="bottom";ctx.fillText(t,el.x,el.y-3);}});ctx.restore();}};
+const BL={id:"bl",afterDatasetsDraw(ch,_a,o){
+  if(!o||!o.on)return;const ctx=ch.ctx;ctx.save();ctx.fillStyle="#333";ctx.font="10.5px "+Chart.defaults.font.family;ctx.textBaseline="middle";
+  ch.getDatasetMeta(0).data.forEach((el,i)=>{const d=ch.data.datasets[0].data[i];if(!d.top)return;ctx.textAlign="left";ctx.fillText(d.name,el.x+el.options.radius+3,el.y);});ctx.restore();}};
+Chart.register(VL,BL);
+function mk(id,cfg){const el=$(id);if(!el)return;if(CH[id])CH[id].destroy();CH[id]=new Chart(el,cfg);}
+function emptyMsg(id,show){const cv=$(id).parentNode;let e=cv.querySelector(".empty");if(show){if(!e){e=document.createElement("div");e.className="empty";e.style.cssText="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#fff";e.textContent="Không có dữ liệu cho bộ lọc này";cv.appendChild(e);}}else if(e)e.remove();}
+const toggle=(k,v)=>{F[k]=F[k]===v?null:v;setTimeout(render,0);};
+const dim=(names,sel,base)=>names.map(n=>(sel==null||n===sel)?(base||PAL[0]):"#ccd4dc");
+function hbar(id,L,opt){
+  opt=opt||{};const top=L.slice(0,opt.max||10);emptyMsg(id,!top.length);
+  const key=opt.key||"vol",fmt=opt.fmt||f1,sel=opt.sel;
+  mk(id,{type:"bar",data:{labels:top.map(g=>g.name),datasets:[{data:top.map(g=>opt.val?opt.val(g):g[key]),backgroundColor:opt.colors?top.map(opt.colors):dim(top.map(g=>g.name),sel)}]},
+    options:{indexAxis:"y",layout:{padding:{right:46}},scales:{x:{grid:{color:"#eef1f4"},ticks:{callback:opt.tick||(v=>f0(v))},max:opt.max_x,min:0},y:{grid:{display:false},ticks:{autoSkip:false,callback(v){const l=this.getLabelForValue(v);return l.length>22?l.slice(0,21)+"…":l;}}}},
+      plugins:{vl:{on:true,horizontal:true,fmt:fmt},tooltip:{callbacks:{label:c=>{const g=top[c.dataIndex];return opt.tip?opt.tip(g):`${fmt(c.parsed.x)} · ${g.n} đợt`;}}}},
+      onClick:(e,els)=>{if(els.length&&opt.click)opt.click(top[els[0].index].name);},onHover:(e,els)=>{e.native.target.style.cursor=els.length&&opt.click?"pointer":"default";}}});
+}
+function donut(id,L,sel,clickKey,n){
+  n=n||6;const top=L.slice(0,n),rest=L.slice(n),other=rest.reduce((s,g)=>s+g.vol,0);
+  const labels=top.map(g=>g.name).concat(other>0?["Khác"]:[]),vals=top.map(g=>g.vol).concat(other>0?[other]:[]);
+  emptyMsg(id,!vals.length);
+  mk(id,{type:"doughnut",data:{labels,datasets:[{data:vals,backgroundColor:labels.map((l,i)=>(!sel||l===sel)?(l==="Khác"?"#b9c3cd":PAL[i%PAL.length]):"#e2e7ec"),borderWidth:1,borderColor:"#fff"}]},
+    options:{cutout:"58%",plugins:{legend:{display:true,position:(innerWidth<700?"bottom":"right"),labels:{font:{size:10.5},generateLabels:ch=>ch.data.labels.map((l,i)=>({text:(l.length>17?l.slice(0,16)+"…":l)+" "+p1(vals[i]/vals.reduce((a,b)=>a+b,0)),fillStyle:ch.data.datasets[0].backgroundColor[i],strokeStyle:"#fff",index:i,hidden:false}))},onClick:()=>{}},
+      tooltip:{callbacks:{label:c=>`${c.label}: ${f1(c.parsed)} tỷ đồng`}}},
+      onClick:(e,els)=>{if(!els.length||!clickKey)return;const l=labels[els[0].index];if(l!=="Khác")toggle(clickKey,l);},onHover:(e,els)=>{e.native.target.style.cursor=els.length&&clickKey?"pointer":"default";}}});
+}
+const dRange=a=>{const x=a.map(r=>dms(r.date));return {min:Math.min(...x)-5*864e5,max:Math.max(...x)+5*864e5};};
+const fmtDate=ms=>{const d=new Date(ms);return String(d.getUTCDate()).padStart(2,"0")+"/"+String(d.getUTCMonth()+1).padStart(2,"0");};
+const dms=s=>Date.UTC(+s.slice(0,4),+s.slice(5,7)-1,+s.slice(8,10));
+function monthsList(rows){
+  const ys=rows.filter(r=>r.ym).map(r=>r.ym).sort();if(!ys.length)return [];
+  const out=[];let [y,m]=ys[0].split("-").map(Number);const [ey,em]=ys[ys.length-1].split("-").map(Number);
+  while(y<ey||(y===ey&&m<=em)){out.push(y+"-"+String(m).padStart(2,"0"));m++;if(m>12){m=1;y++;}}return out;
+}
+const mLabel=ym=>"T"+Number(ym.slice(5))+"/"+ym.slice(2,4);
+
+/* ---------- table helpers ---------- */
+function rankTable(el,L,o){
+  o=o||{};if(!L.length){el.innerHTML='<div class="empty">Chưa có dữ liệu.</div>';return;}
+  const max=Math.max(...L.map(g=>g.vol))||1;
+  el.innerHTML=`<table><thead><tr><th class="n">Hạng</th><th>${esc(o.head)}</th><th class="n">Số đợt PH</th><th class="n">KLPH (tỷ đồng)</th><th class="n">${esc(o.share||"Thị phần")}</th>${o.dist?'<th class="n">TL phân phối</th>':""}</tr></thead><tbody>`+
+   L.map((g,i)=>`<tr class="click${o.sel===g.name?" sel":""}" data-i="${i}"><td class="rk n">${g.rank}</td><td>${esc(g.name)}</td><td class="n">${f0(g.n)}</td><td class="vol n" style="--w:${Math.max(1,g.vol/max*100)}%"><span>${f1(g.vol)}</span></td><td class="n">${p1(g.share)}</td>${o.dist?`<td class="n">${g.dist==null?"–":p1(g.dist)}</td>`:""}</tr>`).join("")+"</tbody></table>";
+  el.querySelectorAll("tbody tr").forEach(tr=>tr.onclick=()=>o.click&&o.click(L[+tr.dataset.i].name));
+}
+
+/* ---------- pages ---------- */
+function renderOverview(){
+  const rows=rowsFor(null),adv=league(rows,ADV),tr=league(rows,TR),wd=wdist(rows);
+  $("kpis").innerHTML=[["Tổng KLPH (tỷ đồng)",f1(sum(rows)),`${f0(rows.length)} đợt phát hành`],["Số đợt phát hành",f0(rows.length),rows.length?`KLPH bình quân ${f1(sum(rows)/rows.length)} tỷ đồng/đợt`:""],
+   ["Tổ chức tư vấn",f0(adv.length),adv[0]?`Dẫn đầu: ${adv[0].name}`:""],["Đại diện sở hữu TP",f0(tr.length),tr[0]?`Dẫn đầu: ${tr[0].name}`:""],["TL phân phối BQ gia quyền",wd==null?"–":p1(wd),"Theo KLPH, các đợt có số liệu"]]
+   .map(([k,v,s])=>`<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${esc(s)}</div></div>`).join("");
+  // month combo
+  const rm=rowsFor("month"),ms=monthsList(rm);emptyMsg("c_month",!ms.length);
+  mk("c_month",{type:"bar",data:{labels:ms.map(mLabel),datasets:[
+    {type:"bar",label:"KLPH",data:ms.map(m=>sum(rm.filter(r=>r.ym===m))),backgroundColor:ms.map(m=>F.month==null||F.month===m?PAL[0]:"#ccd4dc"),yAxisID:"y",order:2},
+    {type:"line",label:"Số đợt PH",data:ms.map(m=>rm.filter(r=>r.ym===m).length),borderColor:PAL[2],backgroundColor:PAL[2],yAxisID:"y1",tension:.25,pointRadius:4,order:1}]},
+    options:{plugins:{legend:{display:true,position:"top",align:"end"},vl:{on:true,ds:0,fmt:v=>v?f0(v):""}},layout:{padding:{top:14}},scales:{y:{beginAtZero:true,grid:{color:"#eef1f4"},ticks:{callback:v=>f0(v)}},y1:{position:"right",beginAtZero:true,grid:{display:false},ticks:{precision:0}},x:{grid:{display:false}}},
+      onClick:(e,els)=>{if(els.length)toggle("month",ms[els[0].index]);}}});
+  donut("c_advshare",league(rowsFor("adv"),ADV),F.adv,"adv");
+  const sec=league(rowsFor("sector"),r=>[r.sector]);
+  donut("c_sector",sec,F.sector,"sector",7);
+  const ta=league(rowsFor("adv"),ADV),tt=league(rowsFor("tr"),TR);
+  hbar("c_topadv",ta,{sel:F.adv,click:n=>toggle("adv",n)});
+  hbar("c_toptr",tt,{sel:F.tr,click:n=>toggle("tr",n)});
+  // tenor combo
+  const rt=rowsFor(null).filter(r=>r.tenor!=null).map(r=>Object.assign({},r,{tenor:Math.max(1,Math.round(r.tenor))})),ts=[...new Set(rt.map(r=>r.tenor))].sort((a,b)=>a-b);emptyMsg("c_tenor",!ts.length);
+  mk("c_tenor",{type:"bar",data:{labels:ts.map(t=>t+" năm"),datasets:[
+    {type:"bar",label:"KLPH",data:ts.map(t=>sum(rt.filter(r=>r.tenor===t))),backgroundColor:ts.map(t=>TGC[(rt.find(r=>r.tenor===t)||{}).tg]||PAL[0]),yAxisID:"y",order:2},
+    {type:"line",label:"TL phân phối",data:ts.map(t=>{const w=wdist(rt.filter(r=>r.tenor===t));return w==null?null:w*100;}),borderColor:"#333",backgroundColor:"#333",yAxisID:"y1",pointRadius:4,borderWidth:1.5,order:1}]},
+    options:{plugins:{legend:{display:true,position:"top",align:"end",labels:{generateLabels:ch=>[{text:"KLPH",fillStyle:PAL[0],strokeStyle:PAL[0],index:0},{text:"TL phân phối (%)",fillStyle:"#333",strokeStyle:"#333",index:1}]}},tooltip:{callbacks:{label:c=>c.datasetIndex?`TL phân phối: ${f1(c.parsed.y)}%`:`KLPH: ${f1(c.parsed.y)} tỷ đồng`}}},
+      scales:{y:{beginAtZero:true,grid:{color:"#eef1f4"},ticks:{callback:v=>f0(v)}},y1:{position:"right",min:0,max:105,grid:{display:false},ticks:{callback:v=>v+"%"}},x:{grid:{display:false}}}}});
+  // cumulative
+  const rc=rowsFor(null).filter(r=>r.date).sort((a,b)=>a.date.localeCompare(b.date));let c=0;emptyMsg("c_cum",!rc.length);
+  mk("c_cum",{type:"line",data:{datasets:[{data:rc.map(r=>({x:dms(r.date),y:(c+=r.vol)})),borderColor:PAL[1],backgroundColor:"rgba(47,128,192,.18)",fill:true,stepped:true,pointRadius:0,borderWidth:2}]},
+    options:{parsing:false,scales:{x:Object.assign({type:"linear",grid:{display:false},ticks:{maxTicksLimit:8,callback:v=>fmtDate(v)}},rc.length?dRange(rc):{}),y:{beginAtZero:true,grid:{color:"#eef1f4"},ticks:{callback:v=>f0(v)}}},plugins:{tooltip:{callbacks:{title:i=>fmtDate(i[0].parsed.x),label:c=>`Lũy kế: ${f1(c.parsed.y)} tỷ đồng`}}}}});
+  donut("c_method",league(rowsFor("method"),r=>r.method?[r.method]:[]),F.method,"method",4);
+  // timeline bubbles
+  const rtl=rowsFor(null).filter(r=>r.date);emptyMsg("c_timeline",!rtl.length);
+  const tgs=Object.keys(TGC);
+  mk("c_timeline",{type:"bubble",data:{datasets:tgs.map(tg=>({label:tg,backgroundColor:TGC[tg]+"b0",borderColor:TGC[tg],data:rtl.filter(r=>r.tg===tg).map(r=>({x:dms(r.date),y:r.vol,r:Math.max(4,Math.sqrt(r.vol)/5.5),b:r.bond,adv:r.advs.join("; ")}))}))},
+    options:{layout:{padding:{top:8,right:8}},scales:{x:Object.assign({type:"linear",grid:{color:"#eef1f4"},ticks:{maxTicksLimit:8,callback:v=>fmtDate(v)}},rtl.length?dRange(rtl):{}),y:{beginAtZero:true,grace:"12%",grid:{color:"#eef1f4"},title:{display:true,text:"KLPH (tỷ đồng)"},ticks:{callback:v=>f0(v)}}},
+      plugins:{tooltip:{callbacks:{title:i=>i[0].raw.b||"",label:c=>[`${fmtDate(c.raw.x)} · ${f1(c.raw.y)} tỷ đồng · ${c.dataset.label}`,c.raw.adv?`Tư vấn: ${c.raw.adv}`:""].filter(Boolean)}}}}});
+  $("lg_timeline").innerHTML=tgs.map(t=>`<span><i style="background:${TGC[t]}"></i>${t}</span>`).join("");
+}
+function renderAdv(){
+  const rows=rowsFor("adv"),sort=$("advsort").value,L=league(rows,ADV,sort);
+  {const miss=rows.filter(r=>!r.advs.length);$("n_adv").textContent=`${f0(miss.length)} đợt (${f1(sum(miss))} tỷ đồng) chưa có thông tin tổ chức tư vấn nên không được xếp hạng. Chỉ tính công ty chứng khoán. Trái phiếu riêng lẻ có nhiều tổ chức liên quan: mỗi tổ chức được tính đủ số đợt và KLPH. TL phân phối chỉ tính cho trái phiếu công chúng.`;}
+  rankTable($("t_adv"),L,{head:"Tổ chức tư vấn",dist:true,sel:F.adv,click:n=>toggle("adv",n)});
+  const B=league(rows,ADV).filter(g=>g.dist!=null);emptyMsg("c_bubble",!B.length);
+  mk("c_bubble",{type:"bubble",data:{datasets:[{data:B.map((g,i)=>({x:g.n,y:g.dist*100,r:Math.max(6,5+Math.sqrt(g.vol)/9),name:g.name,top:i<6,vol:g.vol})),backgroundColor:B.map((g,i)=>(F.adv==null||g.name===F.adv)?PAL[i%PAL.length]+"c0":"#d5dbe1")}]},
+    options:{layout:{padding:{right:70,top:10}},scales:{x:{min:0,max:Math.max(2,...B.map(g=>g.n))+1.5,title:{display:true,text:"Số đợt phát hành"},grid:{color:"#eef1f4"},ticks:{precision:0}},y:{min:0,max:110,title:{display:true,text:"TL phân phối (%)"},grid:{color:"#eef1f4"},ticks:{callback:v=>v<=100?v+"%":""}}},
+      plugins:{bl:{on:true},tooltip:{callbacks:{title:i=>i[0].raw.name,label:c=>[`Số đợt PH: ${c.raw.x}`,`TL phân phối: ${f1(c.raw.y)}%`,`KLPH: ${f1(c.raw.vol)} tỷ đồng`]}}},
+      onClick:(e,els)=>{if(els.length)toggle("adv",B[els[0].index].name);}}});
+  const Dd=league(rows,ADV,"dist").filter(g=>g.dist!=null);
+  hbar("c_distadv",Dd,{max:14,val:g=>g.dist*100,fmt:v=>f1(v)+"%",tick:v=>v<=100?v+"%":"",max_x:112,sel:F.adv,click:n=>toggle("adv",n),tip:g=>`TL phân phối: ${p1(g.dist)} · ${f1(g.vol)} tỷ đồng`,colors:g=>(F.adv!=null&&g.name!==F.adv)?"#ccd4dc":(g.dist>=.95?"#2e9e5b":g.dist>=.8?"#e0a100":"#d64545")});
+  // stacked by month
+  const ms=monthsList(rows),top=league(rows,ADV).slice(0,5).map(g=>g.name);emptyMsg("c_stack",!ms.length);
+  const ds=top.map((n,i)=>({label:n,backgroundColor:PAL[i],data:ms.map(m=>sum(rows.filter(r=>r.ym===m&&r.advs.includes(n))))}));
+  ds.push({label:"Khác",backgroundColor:"#b9c3cd",data:ms.map(m=>sum(rows.filter(r=>r.ym===m&&r.advs.length&&!r.advs.some(x=>top.includes(x)))))});
+  mk("c_stack",{type:"bar",data:{labels:ms.map(mLabel),datasets:ds},options:{plugins:{legend:{display:true,position:"right"},tooltip:{mode:"index",callbacks:{label:c=>c.parsed.y?`${c.dataset.label}: ${f1(c.parsed.y)}`:null}}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:"#eef1f4"},ticks:{callback:v=>f0(v)}}}}});
+  // tenor composition
+  const t8=league(rows,ADV).slice(0,10);emptyMsg("c_advtenor",!t8.length);
+  mk("c_advtenor",{type:"bar",data:{labels:t8.map(g=>g.name),datasets:Object.keys(TGC).map(tg=>({label:tg,backgroundColor:TGC[tg],data:t8.map(g=>sum(g.rs.filter(r=>r.tg===tg)))}))},
+    options:{indexAxis:"y",plugins:{legend:{display:true,position:"top",align:"end"},tooltip:{mode:"index",callbacks:{label:c=>c.parsed.x?`${c.dataset.label}: ${f1(c.parsed.x)}`:null}}},scales:{x:{stacked:true,grid:{color:"#eef1f4"},ticks:{callback:v=>f0(v)}},y:{stacked:true,grid:{display:false}}},
+      onClick:(e,els)=>{if(els.length)toggle("adv",t8[els[0].index].name);}}});
+}
+function renderTr(){
+  const rows=rowsFor("tr").filter(r=>!r.method||r.method==="Công chúng"),L=league(rows,TR);
+  {const miss=rows.filter(r=>!r.tr);$("n_tr").textContent=`Thị phần tính trên trái phiếu công chúng (KLPH ${f1(sum(rows))} tỷ đồng); trái phiếu riêng lẻ không công bố đại diện sở hữu. ${f0(miss.length)} đợt (${f1(sum(miss))} tỷ đồng) chưa có thông tin nên không được xếp hạng.`;}
+  rankTable($("t_tr"),L,{head:"Đại diện sở hữu trái phiếu",share:"Thị phần (công chúng)",sel:F.tr,click:n=>toggle("tr",n)});
+  hbar("c_trbar",L,{max:12,sel:F.tr,click:n=>toggle("tr",n)});
+  donut("c_trshare",L,F.tr,"tr");
+  // heat
+  const ra=rowsFor(null),A=league(ra,ADV).slice(0,8).map(g=>g.name),T=league(ra,TR).slice(0,8).map(g=>g.name);
+  const cellv=(a,t)=>sum(ra.filter(r=>r.advs.includes(a)&&r.tr===t)),mx=Math.max(1,...A.flatMap(a=>T.map(t=>cellv(a,t))));
+  $("heat").innerHTML=A.length&&T.length?`<table class="heat"><thead><tr><th>Tư vấn \\ Đại diện</th>${T.map(t=>`<th class="col n" data-t="${esc(t)}" title="${esc(t)}">${esc(t.length>14?t.slice(0,13)+"…":t)}</th>`).join("")}</tr></thead><tbody>`+
+    A.map(a=>`<tr><td class="rowh" data-a="${esc(a)}">${esc(a.length>22?a.slice(0,21)+"…":a)}</td>${T.map(t=>{const v=cellv(a,t);return `<td style="background:rgba(31,78,121,${v?(.08+.82*v/mx).toFixed(2):0});color:${v/mx>.55?"#fff":"#1d2733"}">${v?f0(v):""}</td>`;}).join("")}</tr>`).join("")+`</tbody></table>`:'<div class="empty">Chưa có dữ liệu.</div>';
+  $("heat").querySelectorAll("[data-a]").forEach(e=>e.onclick=()=>toggle("adv",e.dataset.a));
+  $("heat").querySelectorAll("[data-t]").forEach(e=>e.onclick=()=>toggle("tr",e.dataset.t));
+  const Dd=league(rows,TR,"dist").filter(g=>g.dist!=null);
+  hbar("c_trdist",Dd,{max:12,val:g=>g.dist*100,fmt:v=>f1(v)+"%",tick:v=>v<=100?v+"%":"",max_x:112,sel:F.tr,click:n=>toggle("tr",n),tip:g=>`TL phân phối: ${p1(g.dist)} · ${f1(g.vol)} tỷ đồng`,colors:g=>(F.tr!=null&&g.name!==F.tr)?"#ccd4dc":(g.dist>=.95?"#2e9e5b":g.dist>=.8?"#e0a100":"#d64545")});
+}
+function renderLaw(){
+  $("law_data").style.display=HAS_LAW?"grid":"none";$("law_none").style.display=HAS_LAW?"none":"block";
+  if(HAS_LAW){const L=league(rowsFor("law"),LAW);rankTable($("t_law"),L,{head:"Công ty luật",sel:F.law,click:n=>toggle("law",n)});hbar("c_law",L,{max:12,sel:F.law,click:n=>toggle("law",n)});}
+  const tiers=["Nhóm 1","Nhóm 2","Nhóm 3","Đáng chú ý"];
+  mk("c_iflr",{type:"bar",data:{labels:tiers,datasets:[{data:tiers.map(t=>IFLR.filter(r=>r[0]===t).length),backgroundColor:tiers.map(t=>TIERC[t])}]},options:{layout:{padding:{top:16}},plugins:{vl:{on:true,fmt:v=>v},tooltip:{callbacks:{label:c=>IFLR.filter(r=>r[0]===tiers[c.dataIndex]).map(r=>r[1]).join(", ")}}},scales:{y:{beginAtZero:true,ticks:{precision:0},grid:{color:"#eef1f4"},title:{display:true,text:"Số công ty"}},x:{grid:{display:false}}}}});
+  $("t_iflr").innerHTML=`<table><thead><tr><th>Nhóm</th><th>Công ty luật</th></tr></thead><tbody>${IFLR.map(r=>`<tr><td><span class="tierbadge" style="background:${TIERC[r[0]]}">${esc(r[0])}</span></td><td>${esc(r[1])}</td></tr>`).join("")}</tbody></table>`;
+}
+function renderCol(){
+  const has=D.some(r=>r.coll&&r.coll.length);
+  $("col_data").style.display=has?"grid":"none";$("col_none").style.display=has?"none":"block";
+  if(!has)return;
+  const L=league(rowsFor(null),r=>r.coll||[]);
+  rankTable($("t_col"),L,{head:"Tổ chức quản lý TSBĐ"});
+  hbar("c_col",L,{max:12});
+}
+let SORT={k:"date",d:-1};
+const DCOLS=[["bond","Mã TP"],["code","Mã DN"],["date","Ngày PH"],["tenor","Kỳ hạn"],["vol","KLPH (tỷ đồng)"],["advS","Tổ chức tư vấn"],["tr","Đại diện sở hữu"],["dist","TL phân phối"],["lawS","Công ty luật"],["sector","Nhóm ngành"]];
+function renderData(){
+  const rows=rowsFor(null).map(r=>Object.assign({lawS:r.law.join("; "),advS:r.advs.join("; ")},r));
+  rows.sort((a,b)=>{const x=a[SORT.k],y=b[SORT.k];const c=(x==null)-(y==null)||(typeof x==="number"?x-y:String(x||"").localeCompare(String(y||""),"vi"));return c*SORT.d;});
+  const fm=(k,v)=>v==null||v===""?"–":k==="vol"?f1(v):k==="dist"?p1(v):k==="tenor"?v+" năm":k==="date"?v.slice(8)+"/"+v.slice(5,7)+"/"+v.slice(0,4):esc(v);
+  $("t_data").innerHTML=`<table><thead><tr>${DCOLS.map(([k,h])=>`<th class="sortable ${["vol","tenor","dist"].includes(k)?"n":""}" data-k="${k}">${h}${SORT.k===k?(SORT.d>0?" ▲":" ▼"):""}</th>`).join("")}</tr></thead><tbody>`+
+   rows.map(r=>`<tr>${DCOLS.map(([k])=>`<td class="${["vol","tenor","dist"].includes(k)?"n":""}">${fm(k,r[k])}</td>`).join("")}</tr>`).join("")+"</tbody></table>";
+  $("t_data").querySelectorAll("th[data-k]").forEach(th=>th.onclick=()=>{const k=th.dataset.k;SORT=SORT.k===k?{k,d:-SORT.d}:{k,d:1};renderData();});
+}
+$("exp").onclick=()=>{
+  const rows=rowsFor(null),H=["Mã TP","Mã DN","Ngày PH","Kỳ hạn","KLPH (tỷ đồng)","Tổ chức tư vấn","Đại diện sở hữu","TL phân phối","Công ty luật","Nhóm ngành"];
+  const q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
+  const csv="\uFEFF"+[H.map(q).join(",")].concat(rows.map(r=>[r.bond,r.code,r.date,r.tenor,r.vol,r.advs.join("; "),r.tr,r.dist,r.law.join("; "),r.sector].map(q).join(","))).join("\r\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="league_table_filtered.csv";a.click();
+};
+
+/* ---------- shell ---------- */
+const PAGES=[["overview","Tổng quan"],["adv","Tổ chức tư vấn"],["tr","Đại diện sở hữu"],["col","Tổ chức quản lý TSBĐ"],["law","Công ty luật"],["data","Dữ liệu"]];
+$("nav").innerHTML=PAGES.map(([k,t])=>`<button data-p="${k}">${t}</button>`).join("");
+$("nav").querySelectorAll("button").forEach(b=>b.onclick=()=>{page=b.dataset.p;render();});
+$("title").textContent=META.title;$("meta").innerHTML=`${f0(META.n)} đợt PH${META.from?" từ "+META.from.slice(8)+"/"+META.from.slice(5,7)+"/"+META.from.slice(0,4):""}<br>Cập nhật: ${esc(META.built)}`;document.title=META.title;
+$("advsort").onchange=render;
+function buildSlicers(){
+  const yrs=[...new Set(D.map(r=>r.y).filter(Boolean))].sort((a,b)=>b-a),secs=[...new Set(D.map(r=>r.sector).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"vi"));
+  const opt=(arr,cur,all)=>`<option value="">${all}</option>`+arr.map(v=>`<option value="${esc(v)}"${String(v)===cur?" selected":""}>${esc(v)}</option>`).join("");
+  $("slicers").innerHTML=`<label>Năm <select id="s_year">${opt(yrs,F.year,"Tất cả")}</select></label>`+
+   (METHODS.length>1?`<label>Hình thức <select id="s_method">${opt(METHODS,F.method,"Tất cả")}</select></label>`:"")+
+   `<label>Nhóm kỳ hạn <select id="s_tg">${opt(Object.keys(TGC),F.tg,"Tất cả")}</select></label><label>Nhóm ngành <select id="s_sector">${opt(secs,F.sector,"Tất cả")}</select></label><span class="chips" id="chips"></span><button class="btn" id="clear">Xóa bộ lọc</button>`;
+  $("s_year").onchange=e=>{F.year=e.target.value;render();};if($("s_method"))$("s_method").onchange=e=>{F.method=e.target.value;render();};
+  $("s_tg").onchange=e=>{F.tg=e.target.value;render();};$("s_sector").onchange=e=>{F.sector=e.target.value;render();};
+  $("clear").onclick=()=>{F={year:"",tg:"",sector:"",method:"",adv:null,tr:null,month:null,law:null};buildSlicers();render();};
+}
+function chips(){
+  const items=[["adv","Tư vấn",F.adv],["tr","Đại diện",F.tr],["month","Tháng",F.month&&mLabel(F.month)],["method","Hình thức",F.method],["law","Luật",F.law]].filter(x=>x[2]);
+  $("chips").innerHTML=items.map(([k,l,v])=>`<span class="chip">${l}: ${esc(v)}<button data-k="${k}" title="Bỏ lọc">×</button></span>`).join("");
+  $("chips").querySelectorAll("button").forEach(b=>b.onclick=()=>{F[b.dataset.k]=null;render();});
+  if($("s_sector"))$("s_sector").value=F.sector||"";if($("s_method"))$("s_method").value=F.method||"";
+}
+function render(){
+  document.querySelectorAll(".page").forEach(p=>p.classList.toggle("on",p.id==="p_"+page));
+  $("nav").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.p===page));
+  chips();
+  ({overview:renderOverview,adv:renderAdv,tr:renderTr,col:renderCol,law:renderLaw,data:renderData})[page]();
+}
+buildSlicers();render();
+let _rz;addEventListener("resize",()=>{clearTimeout(_rz);_rz=setTimeout(render,250);});
+</script>
+</body>
+</html>
